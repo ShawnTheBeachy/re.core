@@ -12,7 +12,7 @@ A .NET Core library to help you easily add reCAPTCHA verification to your Razor 
 services.AddMvc(x =>
 {
     x.AddReCore();
-})
+});
 
 services.AddReCore(x =>
 {
