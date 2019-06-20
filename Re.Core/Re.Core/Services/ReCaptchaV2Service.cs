@@ -36,7 +36,7 @@ namespace Re.Core.Services
             }
 
             var match = Regex.Match(content, "\"success\":(true|false)", RegexOptions.IgnoreCase);
-            var success = bool.Parse(match.Groups.Single().Value);
+            var success = bool.Parse(match.Groups.Last().Value);
 
             if (!success)
             {
