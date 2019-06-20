@@ -12,12 +12,12 @@ A .NET Core library to help you easily add reCAPTCHA verification to your Razor 
 services.AddMvc(x =>
 {
     x.AddReCore();
-})
+});
 
 services.AddReCore(x =>
 {
     x.NotCompletedMessage = "Optional custom message";
-    x.SecretKey = "<your-secret-key>";    // This is required to be set here.
+    x.SecretKey = "<your-secret-key>";
     x.VerificationFailedMessage = "Optional custom message";
     return x;
 });
@@ -29,7 +29,7 @@ services.AddReCore(x =>
 @using Re.Core;
 
 <form method="POST">
-  @Html.reCAPTCHA("<your-site-key>")
+    @Html.reCAPTCHA("<your-site-key>")
 </form>
 ```
 
@@ -38,9 +38,14 @@ services.AddReCore(x =>
 ```c#
 public void OnPost()
 {
-  if (ModelState.IsValid)
-  {
-    // Voila! The reCAPTCHA was completed and successfully verified.
-  }
+    if (ModelState.IsValid)
+    {   
+        // Voila! The reCAPTCHA was completed and successfully verified.
+    }
+    
+    else
+    {
+        // Either the user did not complete the reCAPTCHA or the server-side verification failed.
+    }
 }
 ```
