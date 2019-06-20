@@ -17,7 +17,7 @@ services.AddMvc(x =>
 services.AddReCore(x =>
 {
     x.NotCompletedMessage = "Optional custom message";
-    x.SecretKey = "<your-secret-key>";    // This is required to be set here.
+    x.SecretKey = "<your-secret-key>";
     x.VerificationFailedMessage = "Optional custom message";
     return x;
 });
