@@ -271,7 +271,7 @@ namespace Re.Core.Tests
         private ReCoreFilter GetFilter()
         {
             var v2Service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
-            var filter = new ReCoreFilter(new ReCoreOptions(), v2Service);
+            var filter = new ReCoreFilter(new ReCoreOptions { SecretKey = "abcde" }, v2Service);
             return filter;
         }
 
@@ -290,6 +290,14 @@ namespace Re.Core.Tests
 
             var service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
             Assert.Throws<ArgumentNullException>(() => new ReCoreFilter(null, service));
+        }
+
+        [Fact]
+        public void ThrowsIfSecretKeyIsNotSet()
+        {
+            var v2Service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
+            var exception = Assert.Throws<Exception>(() => new ReCoreFilter(new ReCoreOptions(), v2Service));
+            Assert.Equal(Strings.SECRET_KEY_REQUIRED, exception.Message);
         }
 
         [Fact]

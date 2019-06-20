@@ -17,6 +17,11 @@ namespace Re.Core
         {
             _opts = opts ?? throw new ArgumentNullException(nameof(opts));
             _v2Service = v2Service ?? throw new ArgumentNullException(nameof(v2Service));
+
+            if (string.IsNullOrWhiteSpace(opts.SecretKey))
+            {
+                throw new Exception(Strings.SECRET_KEY_REQUIRED);
+            }
         }
 
         public async Task OnResourceExecutionAsync(ResourceExecutingContext context, ResourceExecutionDelegate next)

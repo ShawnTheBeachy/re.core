@@ -15,11 +15,6 @@ namespace Re.Core
             var opts = new ReCoreOptions();
             opts = expr(opts);
 
-            if (string.IsNullOrWhiteSpace(opts.SecretKey))
-            {
-                throw new Exception(Strings.SECRET_KEY_REQUIRED);
-            }
-
             services.AddSingleton(opts);
             services.AddScoped<ReCaptchaV2Service>();
             services.AddScoped<IHttpService, HttpService>();

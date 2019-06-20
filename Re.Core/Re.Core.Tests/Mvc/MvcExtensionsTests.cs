@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Re.Core.Interfaces;
 using Re.Core.Services;
-using System;
 using Xunit;
 
 namespace Re.Core.Tests
@@ -23,8 +22,7 @@ namespace Re.Core.Tests
         public void DoesNotImplodeIfConfigExpressionIsNotSet()
         {
             var services = new ServiceCollection();
-            var exception = Assert.Throws<Exception>(() => services.AddReCore(null));
-            Assert.Equal(Strings.SECRET_KEY_REQUIRED, exception.Message);
+            services.AddReCore(null);
         }
 
         [Fact]
@@ -48,14 +46,6 @@ namespace Re.Core.Tests
             provider.GetRequiredService<ReCoreOptions>();
             provider.GetRequiredService<ReCaptchaV2Service>();
             Assert.IsType<HttpService>(provider.GetRequiredService<IHttpService>());
-        }
-
-        [Fact]
-        public void ThrowsIfSecretKeyIsNotSet()
-        {
-            var services = new ServiceCollection();
-            var exception = Assert.Throws<Exception>(() => services.AddReCore(x => x));
-            Assert.Equal(Strings.SECRET_KEY_REQUIRED, exception.Message);
         }
     }
 }
