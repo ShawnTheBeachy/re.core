@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.2</TargetFramework>
   
     <PackageId>Re.Core</PackageId>
+    <Description>A .NET Core library to help you easily add reCAPTCHA verification to your Razor pages.</Description>
     <Version>1.0.0</Version>
     <Authors>ShawnTheBeachy</Authors>
   </PropertyGroup>
