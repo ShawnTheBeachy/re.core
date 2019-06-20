@@ -29,7 +29,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/Re.Core.csproj'
-    versioningScheme: 'off'
+    versioningScheme: 'byBuildNumber'
 
 - task: NuGetCommand@2
   displayName: 'NuGet Push'
