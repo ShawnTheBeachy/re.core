@@ -37,15 +37,17 @@ namespace Re.Core.Tests
                 return x;
             });
 
-            Assert.Equal(2, services.Count);
+            Assert.Equal(3, services.Count);
             Assert.Equal(ServiceLifetime.Singleton, services[0].Lifetime);
             Assert.Equal(ServiceLifetime.Scoped, services[1].Lifetime);
+            Assert.Equal(ServiceLifetime.Scoped, services[2].Lifetime);
 
-            services.AddScoped<IHttpService, MockHttpService>();
+            services.AddHttpClient();
 
             var provider = services.BuildServiceProvider();
             provider.GetRequiredService<ReCoreOptions>();
             provider.GetRequiredService<ReCaptchaV2Service>();
+            Assert.IsType<HttpService>(provider.GetRequiredService<IHttpService>());
         }
 
         [Fact]

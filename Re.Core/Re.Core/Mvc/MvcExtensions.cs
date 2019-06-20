@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Re.Core.Interfaces;
 using Re.Core.Services;
 using System;
 
@@ -21,6 +22,7 @@ namespace Re.Core
 
             services.AddSingleton(opts);
             services.AddScoped<ReCaptchaV2Service>();
+            services.AddScoped<IHttpService, HttpService>();
             return services;
         }
 
