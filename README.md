@@ -1,6 +1,6 @@
 # Re.Core
 
-[![Build Status](https://shawnthebeachy.visualstudio.com/Re.Core/_apis/build/status/ShawnTheBeachy.re.core?branchName=master)](https://shawnthebeachy.visualstudio.com/Re.Core/_build/latest?definitionId=5&branchName=master)
+[![Build Status](https://shawnthebeachy.visualstudio.com/Re.Core/_apis/build/status/ShawnTheBeachy.re.core?branchName=develop)](https://shawnthebeachy.visualstudio.com/Re.Core/_build/latest?definitionId=5&branchName=develop)
 
 A .NET Core library to help you easily add reCAPTCHA verification to your Razor Pages.
 
