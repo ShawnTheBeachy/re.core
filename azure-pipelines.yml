@@ -23,3 +23,9 @@ steps:
   inputs:
     projects: '**/*.Tests/*.csproj'
     command: 'test'
+
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/Re.Core.csproj'
+    versioningScheme: 'byBuildNumber'
