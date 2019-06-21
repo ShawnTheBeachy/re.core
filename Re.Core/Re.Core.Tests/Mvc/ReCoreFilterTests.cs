@@ -43,9 +43,17 @@ namespace Re.Core.Tests
             public override bool HasFormContentType => _hasFormContentType;
         }
 
+        private class MockInvalidCustomExceptionService : IReCaptchaService
+        {
+            public Task<VerificationResponse> VerifyTokenAsync(string token)
+            {
+                throw new ReCoreVerificationException(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE);
+            }
+        }
+
         private class MockInvalidGenericExceptionService : IReCaptchaService
         {
-            public Task VerifyTokenAsync(string token)
+            public Task<VerificationResponse> VerifyTokenAsync(string token)
             {
                 throw new Exception(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE);
             }
@@ -53,18 +61,41 @@ namespace Re.Core.Tests
 
         private class MockInvalidService : IReCaptchaService
         {
-            public Task VerifyTokenAsync(string token)
+            public Task<VerificationResponse> VerifyTokenAsync(string token)
             {
-                throw new ReCoreVerificationException(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE);
+                return Task.FromResult(new VerificationResponse
+                {
+                    Success = false
+                });
             }
         }
 
         private class MockValidService : IReCaptchaService
         {
-            public Task VerifyTokenAsync(string token)
+            public Task<VerificationResponse> VerifyTokenAsync(string token)
             {
-                return Task.CompletedTask;
+                return Task.FromResult(new VerificationResponse
+                {
+                    Success = true
+                });
             }
+        }
+
+        [Fact]
+        public async Task AddsCustomExceptionToHttpContextIfThrown()
+        {
+            var (context, next) = GetPostingContexts(null);
+            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
+            {
+                ["g-recaptcha-response"] = "abcde"
+            });
+
+            var filter = GetFilter(new MockInvalidCustomExceptionService());
+            await filter.OnResourceExecutionAsync(context, next);
+
+            var exception = context.HttpContext.Features.Get<ReCoreVerificationException>();
+            Assert.NotNull(exception);
+            Assert.Equal(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE, exception.Message);
         }
 
         [Fact]
@@ -77,25 +108,6 @@ namespace Re.Core.Tests
             var exception = context.HttpContext.Features.Get<ReCoreVerificationException>();
             Assert.NotNull(exception);
             Assert.Equal(Strings.NOT_COMPLETED_DEFAULT_MESSAGE, exception.Message);
-        }
-
-        [Fact]
-        public async Task AddsExceptionToHttpContextIfVerificationFails()
-        {
-            var (context, next) = GetPostingContexts(null);
-            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
-            {
-                ["g-recaptcha-response"] = "abcde",
-                [Strings.FORM_VERSION_KEY] = "v2"
-            });
-
-            var filter = GetFilter();
-            filter._verificationService = new MockInvalidService();
-            await filter.OnResourceExecutionAsync(context, next);
-
-            var exception = context.HttpContext.Features.Get<ReCoreVerificationException>();
-            Assert.NotNull(exception);
-            Assert.Equal(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE, exception.Message);
         }
 
         [Fact]
@@ -117,17 +129,49 @@ namespace Re.Core.Tests
             var (context, next) = GetPostingContexts(null);
             context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
             {
-                ["g-recaptcha-response"] = "abcde",
-                [Strings.FORM_VERSION_KEY] = "v2"
+                ["g-recaptcha-response"] = "abcde"
             });
 
-            var filter = GetFilter();
-            filter._verificationService = new MockInvalidService();
+            var filter = GetFilter(new MockInvalidService());
             await filter.OnResourceExecutionAsync(context, next);
 
             Assert.False(context.ModelState.IsValid);
             Assert.Equal(ModelValidationState.Invalid, context.ModelState.GetFieldValidationState(Strings.FORM_KEY));
             Assert.Equal(Strings.VERIFICATION_FAILED_DEFAULT_MESSAGE, context.ModelState[Strings.FORM_KEY].Errors.Single().ErrorMessage);
+        }
+
+        [Fact]
+        public async Task AddsResponseToHttpContextIfVerificationFails()
+        {
+            var (context, next) = GetPostingContexts(null);
+            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
+            {
+                ["g-recaptcha-response"] = "abcde"
+            });
+
+            var filter = GetFilter(new MockInvalidService());
+            await filter.OnResourceExecutionAsync(context, next);
+
+            var response = context.HttpContext.Features.Get<VerificationResponse>();
+            Assert.NotNull(response);
+            Assert.False(response.Success);
+        }
+
+        [Fact]
+        public async Task AddsResponseToHttpContextIfVerificationSucceeds()
+        {
+            var (context, next) = GetPostingContexts(null);
+            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
+            {
+                ["g-recaptcha-response"] = "abcde"
+            });
+
+            var filter = GetFilter(new MockValidService());
+            await filter.OnResourceExecutionAsync(context, next);
+
+            var response = context.HttpContext.Features.Get<VerificationResponse>();
+            Assert.NotNull(response);
+            Assert.True(response.Success);
         }
 
         [Fact]
@@ -173,12 +217,10 @@ namespace Re.Core.Tests
             context.HttpContext.Request.ContentType = "application/x-www-form-urlencoded";
             context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
             {
-                ["g-recaptcha-response"] = "abcde",
-                [Strings.FORM_VERSION_KEY] = "v2"
+                ["g-recaptcha-response"] = "abcde"
             });
 
-            var filter = GetFilter();
-            filter._verificationService = new MockValidService();
+            var filter = GetFilter(new MockValidService());
             await filter.OnResourceExecutionAsync(context, next);
 
             Assert.True(context.HttpContext.Request.Headers.ContainsKey(Strings.VERIFIED_HEADER));
@@ -196,6 +238,24 @@ namespace Re.Core.Tests
             await filter.OnResourceExecutionAsync(context, next);
 
             Assert.False(context.HttpContext.Request.Headers.ContainsKey(Strings.VERIFIED_HEADER));
+        }
+
+        [Fact]
+        public async Task DoesNotVerifyIfModelStateIsInvalid()
+        {
+            var (context, next) = GetContexts();
+            context.HttpContext.Request.Method = "POST";
+            context.HttpContext.Request.ContentType = "application/x-www-form-urlencoded";
+            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
+            {
+                ["g-recaptcha-response"] = "abcde"
+            });
+            context.ModelState.AddModelError("blank", "Invalid modelstate.");
+
+            var filter = GetFilter(new MockInvalidService());
+            await filter.OnResourceExecutionAsync(context, next);
+            
+            // If verification is attempted, an exception would be thrown.
         }
 
         [Fact]
@@ -268,10 +328,10 @@ namespace Re.Core.Tests
             return (context, next);
         }
 
-        private ReCoreFilter GetFilter()
+        private ReCoreFilter GetFilter(IReCaptchaService verificationService = null)
         {
-            var v2Service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
-            var filter = new ReCoreFilter(new ReCoreOptions { SecretKey = "abcde" }, v2Service);
+            verificationService = verificationService ?? new ReCaptchaService(new MockHttpService(), new ReCoreOptions());
+            var filter = new ReCoreFilter(new ReCoreOptions { SecretKey = "abcde" }, verificationService);
             return filter;
         }
 
@@ -288,47 +348,22 @@ namespace Re.Core.Tests
             services.AddHttpClient();
             var provider = services.BuildServiceProvider();
 
-            var service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
+            var service = new ReCaptchaService(new MockHttpService(), new ReCoreOptions());
             Assert.Throws<ArgumentNullException>(() => new ReCoreFilter(null, service));
         }
 
         [Fact]
         public void ThrowsIfSecretKeyIsNotSet()
         {
-            var v2Service = new ReCaptchaV2Service(new MockHttpService(), new ReCoreOptions());
-            var exception = Assert.Throws<Exception>(() => new ReCoreFilter(new ReCoreOptions(), v2Service));
+            var verificationService = new ReCaptchaService(new MockHttpService(), new ReCoreOptions());
+            var exception = Assert.Throws<Exception>(() => new ReCoreFilter(new ReCoreOptions(), verificationService));
             Assert.Equal(Strings.SECRET_KEY_REQUIRED, exception.Message);
         }
 
         [Fact]
-        public void ThrowsIfV2ServiceIsNull()
+        public void ThrowsIfVerificationServiceIsNull()
         {
             Assert.Throws<ArgumentNullException>(() => new ReCoreFilter(new ReCoreOptions(), null));
-        }
-
-        [Fact]
-        public async Task ThrowsIfVersionIsInvalid()
-        {
-            var (context, next) = GetPostingContexts(null);
-            context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
-            {
-                ["g-recaptcha-response"] = "abcde",
-                [Strings.FORM_VERSION_KEY] = "v4"
-            });
-
-            var filter = GetFilter();
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await filter.OnResourceExecutionAsync(context, next));
-            Assert.Equal(Strings.INVALID_VERSION, exception.Message);
-        }
-
-        [Fact]
-        public async Task ThrowsIfVersionKeyIsMissing()
-        {
-            var (context, next) = GetPostingContexts("abcde");
-
-            var filter = GetFilter();
-            var exception = await Assert.ThrowsAsync<Exception>(async () => await filter.OnResourceExecutionAsync(context, next));
-            Assert.Equal(Strings.VERSION_REQUIRED, exception.Message);
         }
 
         [Fact]
@@ -337,12 +372,10 @@ namespace Re.Core.Tests
             var (context, next) = GetPostingContexts(null);
             context.HttpContext.Request.Form = new FormCollection(new Dictionary<string, StringValues>
             {
-                ["g-recaptcha-response"] = "abcde",
-                [Strings.FORM_VERSION_KEY] = "v2"
+                ["g-recaptcha-response"] = "abcde"
             });
 
-            var filter = GetFilter();
-            filter._verificationService = new MockInvalidGenericExceptionService();
+            var filter = GetFilter(new MockInvalidGenericExceptionService());
             await filter.OnResourceExecutionAsync(context, next);
 
             var exception = context.HttpContext.Features.Get<ReCoreVerificationException>();

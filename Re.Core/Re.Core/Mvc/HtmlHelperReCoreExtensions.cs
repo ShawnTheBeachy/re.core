@@ -9,28 +9,46 @@ namespace Re.Core
         internal static Func<string, Theme, string> v2Template => (string siteKey, Theme theme) =>
 $@"
 <script src=""https://www.google.com/recaptcha/api.js"" async defer></script>
-<input type=""hidden"" name=""{Strings.FORM_VERSION_KEY}"" value=""v2"" />
 <div class=""g-recaptcha"" data-sitekey=""{siteKey}"" data-theme=""{theme.ToString().ToLower()}""></div>
 ";
 
-        public static IHtmlContent reCAPTCHA(this IHtmlHelper helper,
-                                             string siteKey,
-                                             Version version = Version.v2,
-                                             Theme theme = Theme.Light)
+        internal static Func<string, string, string> v3Template = (string siteKey, string action) =>
+$@"
+<script src=""https://www.google.com/recaptcha/api.js?render={siteKey}""></script>
+<script>
+    grecaptcha.ready(function() {{
+        grecaptcha.execute('{siteKey}', {{ action: '{action}' }})
+            .then(function(token) {{
+                document.getElementById('g-recaptcha-response').value = token;
+            }});
+    }});
+</script>
+<input type=""hidden"" id=""g-recaptcha-response"" name=""g-recaptcha-response"" />
+";
+
+        public static IHtmlContent reCAPTCHAv2(this IHtmlHelper helper, string siteKey, Theme theme = Theme.Light)
         {
             if (string.IsNullOrWhiteSpace(siteKey))
             {
                 throw new ArgumentNullException(nameof(siteKey));
             }
 
-            return version == Version.v2 ? helper.reCAPTCHAv2(siteKey, theme) : null;
+            return helper.Raw(v2Template(siteKey, theme));
         }
 
-        private static IHtmlContent reCAPTCHAv2(this IHtmlHelper helper,
-                                                string siteKey,
-                                                Theme theme)
+        public static IHtmlContent reCAPTCHAv3(this IHtmlHelper helper, string siteKey, string action)
         {
-            return helper.Raw(v2Template(siteKey, theme));
+            if (string.IsNullOrWhiteSpace(action))
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            if (string.IsNullOrWhiteSpace(siteKey))
+            {
+                throw new ArgumentNullException(nameof(siteKey));
+            }
+
+            return helper.Raw(v3Template(siteKey, action));
         }
     }
 }

@@ -44,7 +44,7 @@ namespace Re.Core.Tests
 
             var provider = services.BuildServiceProvider();
             provider.GetRequiredService<ReCoreOptions>();
-            provider.GetRequiredService<ReCaptchaV2Service>();
+            Assert.IsType<ReCaptchaService>(provider.GetRequiredService<IReCaptchaService>());
             Assert.IsType<HttpService>(provider.GetRequiredService<IHttpService>());
         }
     }

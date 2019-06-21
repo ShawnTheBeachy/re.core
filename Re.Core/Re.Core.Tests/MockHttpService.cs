@@ -9,12 +9,15 @@ namespace Re.Core.Tests
     public sealed class MockHttpService : IHttpService
     {
         private readonly bool _shouldNetworkRequestSucceed;
+        private readonly bool _shouldReturnInvalidJson;
         private readonly bool _shouldVerifySucceed;
 
-        public MockHttpService(bool shouldNetworkRequestSucceed = true, bool shouldVerifySucceed = true)
+        public MockHttpService(bool shouldNetworkRequestSucceed = true, bool shouldVerifySucceed = true,
+                               bool shouldReturnInvalidJson = false)
         {
             _shouldNetworkRequestSucceed = shouldNetworkRequestSucceed;
             _shouldVerifySucceed = shouldVerifySucceed;
+            _shouldReturnInvalidJson = shouldReturnInvalidJson;
         }
 
         public async Task<HttpResponseMessage> PostAsync(string requestUri, HttpContent content)
@@ -27,7 +30,7 @@ namespace Re.Core.Tests
                 success = _shouldVerifySucceed
             };
 
-            message.Content = new StringContent(JsonConvert.SerializeObject(body));
+            message.Content = new StringContent(_shouldReturnInvalidJson ? "{ \"success:\" true }" : JsonConvert.SerializeObject(body));
             return message;
         }
     }

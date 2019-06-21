@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 using Re.Core.Interfaces;
-using Re.Core.Services;
 using System;
 using System.Threading.Tasks;
 
@@ -10,13 +9,12 @@ namespace Re.Core
     internal sealed class ReCoreFilter : IAsyncResourceFilter
     {
         private readonly ReCoreOptions _opts;
-        private readonly ReCaptchaV2Service _v2Service;
-        internal IReCaptchaService _verificationService;
+        private readonly IReCaptchaService _verificationService;
 
-        public ReCoreFilter(ReCoreOptions opts, ReCaptchaV2Service v2Service)
+        public ReCoreFilter(ReCoreOptions opts, IReCaptchaService verificationService)
         {
             _opts = opts ?? throw new ArgumentNullException(nameof(opts));
-            _v2Service = v2Service ?? throw new ArgumentNullException(nameof(v2Service));
+            _verificationService = verificationService ?? throw new ArgumentNullException(nameof(verificationService));
 
             if (string.IsNullOrWhiteSpace(opts.SecretKey))
             {
@@ -40,21 +38,21 @@ namespace Re.Core
 
                 else
                 {
-                    if (!context.HttpContext.Request.Form.ContainsKey(Strings.FORM_VERSION_KEY))
+                    if (!context.ModelState.IsValid)
                     {
-                        throw new Exception(Strings.VERSION_REQUIRED);
+                        await next();
+                        return;
                     }
-
-                    if (!Enum.TryParse<Version>(context.HttpContext.Request.Form[Strings.FORM_VERSION_KEY].ToString(), out var version))
-                    {
-                        throw new Exception(Strings.INVALID_VERSION);
-                    }
-
-                    _verificationService = _verificationService ?? (version == Version.v2 ? _v2Service : null);
 
                     try
                     {
-                        await _verificationService.VerifyTokenAsync(reCaptcha[0]);
+                        var response = await _verificationService.VerifyTokenAsync(reCaptcha[0]);
+                        context.HttpContext.Features.Set(response);
+
+                        if (!response.Success)
+                        {
+                            context.ModelState.AddModelError(Strings.FORM_KEY, _opts.VerificationFailedMessage);
+                        }
                     }
 
                     catch (ReCoreVerificationException e)
