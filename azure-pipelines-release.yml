@@ -1,1 +1,42 @@
+trigger:
+  branches:
+    include:
+      - master
+pr:
+  branches:
+    exclude:
+        - '*'
+
+pool:
+  vmImage: 'VS2017-Win2016'
+
+steps:
+    
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration Release'
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    projects: '**/*.Tests/*.csproj'
+    command: 'test'
+
+- task: DotNetCoreCLI@2
+  displayName: Pack
+  inputs:
+    command: 'pack'
+    packagesToPack: '**/Re.Core.csproj'
+    versioningScheme: 'off'
+
+- task: NuGetCommand@2
+  displayName: 'NuGet Push'
+  inputs:
+    command: 'push'
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg;!$(Build.ArtifactStagingDirectory)/**/*.symbols.nupkg'
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'NuGet'
 
