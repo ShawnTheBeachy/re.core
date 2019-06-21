@@ -3,6 +3,11 @@ trigger:
     include:
       - master
 
+pr:
+  branches:
+    include:
+    - master
+
 pool:
   vmImage: 'VS2017-Win2016'
 
