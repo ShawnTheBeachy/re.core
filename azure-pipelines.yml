@@ -4,7 +4,9 @@
 # https://aka.ms/yaml
 
 trigger:
-- develop
+  branches:
+    include:
+    - develop
 
 pool:
   vmImage: 'VS2017-Win2016'
