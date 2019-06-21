@@ -1,12 +1,7 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
-
 trigger:
   branches:
     include:
-    - master
+      - master
 
 pool:
   vmImage: 'VS2017-Win2016'
@@ -31,7 +26,7 @@ steps:
   inputs:
     command: 'pack'
     packagesToPack: '**/Re.Core.csproj'
-    versioningScheme: 'byBuildNumber'
+    versioningScheme: 'off'
 
 - task: NuGetCommand@2
   displayName: 'NuGet Push'
