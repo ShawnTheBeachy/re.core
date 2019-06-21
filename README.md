@@ -4,6 +4,10 @@
 
 A .NET Core library to help you easily add reCAPTCHA verification to your Razor Pages.
 
+## Disclaimer
+
+This is just a little project I made to reduce code duplication in one of my apps. It may not use all the best practices for reCAPTCHA.
+
 ## Basic usage
 
 ### Startup.cs
@@ -23,13 +27,23 @@ services.AddReCore(x =>
 });
 ```
 
-### YourPage.cshtml
+### YourPage.cshtml (v2)
 
 ```cshtml
 @using Re.Core;
 
 <form method="POST">
-    @Html.reCAPTCHA("<your-site-key>")
+    @Html.reCAPTCHAv2("<your-site-key>")
+</form>
+```
+
+### YourPage.cshtml (v3)
+
+```cshtml
+@using Re.Core;
+
+<form method="POST">
+    @Html.reCAPTCHAv3("<your-site-key>", "action")
 </form>
 ```
 
