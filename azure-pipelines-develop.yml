@@ -1,12 +1,12 @@
 trigger:
   branches:
     include:
-      - master
+      - develop
 
 pr:
   branches:
     include:
-    - master
+    - develop
 
 pool:
   vmImage: 'VS2017-Win2016'
@@ -18,7 +18,7 @@ steps:
   inputs:
     command: 'build'
     projects: '**/*.csproj'
-    arguments: '--configuration Release'
+    arguments: '--configuration Develop'
 
 - task: DotNetCoreCLI@2
   displayName: Test
