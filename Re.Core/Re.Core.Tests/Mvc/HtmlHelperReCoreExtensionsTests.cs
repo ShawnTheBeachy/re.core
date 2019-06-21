@@ -223,15 +223,15 @@ namespace Re.Core.Tests.Mvc
         }
 
         [Fact]
-        public void ReturnsNullIfUnsupportedVersion()
+        public void ReturnsV2IfSpecified()
         {
-            Assert.Null(new MockHelper().reCAPTCHA("abcde", Version.v3));
+            Assert.Equal(HtmlHelperReCoreExtensions.v2Template("abcde", Theme.Light), new MockHelper().reCAPTCHAv2("abcde").ToString());
         }
 
         [Fact]
-        public void ReturnsV2IfSpecified()
+        public void ReturnsV3IfSpecified()
         {
-            Assert.Equal(HtmlHelperReCoreExtensions.v2Template("abcde", Theme.Light), new MockHelper().reCAPTCHA("abcde", Version.v2).ToString());
+            Assert.Equal(HtmlHelperReCoreExtensions.v3Template("abcde", "action"), new MockHelper().reCAPTCHAv3("abcde", "action").ToString());
         }
 
         [Theory]
@@ -239,15 +239,29 @@ namespace Re.Core.Tests.Mvc
         [InlineData(Theme.Light)]
         public void SetsThemeProperly(Theme theme)
         {
-            Assert.Equal(HtmlHelperReCoreExtensions.v2Template("abcde", theme), new MockHelper().reCAPTCHA("abcde", Version.v2, theme).ToString());
+            Assert.Equal(HtmlHelperReCoreExtensions.v2Template("abcde", theme), new MockHelper().reCAPTCHAv2("abcde", theme).ToString());
         }
 
         [Fact]
-        public void ThrowsIfSiteKeyIsEmpty()
+        public void v2ThrowsIfSiteKeyIsEmpty()
         {
-            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHA(null, Version.v2));
-            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHA(string.Empty, Version.v2));
-            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHA("  ", Version.v2));
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv2(null));
+        }
+
+        [Fact]
+        public void v3ThrowsIfActionIsEmpty()
+        {
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3("abcde", null));
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3("abcde", string.Empty));
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3("abcde", "  "));
+        }
+
+        [Fact]
+        public void v3ThrowsIfSiteKeyIsEmpty()
+        {
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3(null, "abcde"));
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3(string.Empty, "abcde"));
+            Assert.Throws<ArgumentNullException>(() => new MockHelper().reCAPTCHAv3("  ", "abcde"));
         }
     }
 }

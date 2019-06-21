@@ -16,7 +16,7 @@ namespace Re.Core
             opts = expr(opts);
 
             services.AddSingleton(opts);
-            services.AddScoped<ReCaptchaV2Service>();
+            services.AddScoped<IReCaptchaService, ReCaptchaService>();
             services.AddScoped<IHttpService, HttpService>();
             return services;
         }

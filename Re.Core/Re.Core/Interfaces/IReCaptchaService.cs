@@ -4,6 +4,6 @@ namespace Re.Core.Interfaces
 {
     internal interface IReCaptchaService
     {
-        Task VerifyTokenAsync(string token);
+        Task<VerificationResponse> VerifyTokenAsync(string token);
     }
 }
