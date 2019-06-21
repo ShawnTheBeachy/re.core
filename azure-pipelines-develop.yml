@@ -1,0 +1,27 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pr:
+  branches:
+    include:
+    - develop
+
+pool:
+  vmImage: 'VS2017-Win2016'
+
+steps:
+    
+- task: DotNetCoreCLI@2
+  displayName: Build
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration Develop'
+
+- task: DotNetCoreCLI@2
+  displayName: Test
+  inputs:
+    projects: '**/*.Tests/*.csproj'
+    command: 'test'
